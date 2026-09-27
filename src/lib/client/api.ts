@@ -44,7 +44,15 @@ export const syncGmail = () => call<{ imported: number; skipped: number; duplica
 export const disconnectGmail = () => call<{ ok: true }>("/api/integrations/google/disconnect", { method: "POST" });
 
 export type IntegrationStatus = {
-  gmail: { configured: boolean; connected: boolean; email?: string; lastSyncAt?: string | null; watchExpiration?: string | null; realtime: boolean };
+  gmail: {
+    configured: boolean;
+    connected: boolean;
+    email?: string;
+    lastSyncAt?: string | null;
+    watchExpiration?: string | null;
+    realtime: boolean;
+    error?: string;
+  };
   slack: { connected: boolean; team?: string; bot?: string; error?: string; channelId: string | null };
   formUrl: string;
 };

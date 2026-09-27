@@ -77,13 +77,24 @@ export function IntegrationsView({
       <ViewHeader title="連携" description="依頼を受け付ける窓口（Gmail・Slack・Webフォーム）との接続状況です。" />
 
       <div className="grid gap-4 xl:grid-cols-2">
-        <Card icon={<Mail className="size-4.5" />} title="Gmail" status={<StatusPill ok={Boolean(gmail?.connected)} label={gmail?.connected ? "接続済み" : "未接続"} />}>
+        <Card
+          icon={<Mail className="size-4.5" />}
+          title="Gmail"
+          status={<StatusPill ok={Boolean(gmail?.connected && !gmail.error)} label={gmail?.error ? "接続エラー" : gmail?.connected ? "接続済み" : "未接続"} />}
+        >
           {!gmail?.configured ? (
             <p className="text-muted-foreground">
               環境変数 <code className="rounded bg-muted px-1">GOOGLE_CLIENT_ID</code> と <code className="rounded bg-muted px-1">GOOGLE_CLIENT_SECRET</code> を設定すると接続できます。
             </p>
           ) : gmail.connected ? (
             <>
+              {gmail.error && (
+                <p role="alert" className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-xs leading-relaxed text-destructive">
+                  Gmail にアクセスできません。Google 側で接続が取り消されたか、アプリが無効になっている可能性があります。
+                  「接続を解除」してから、もう一度「Gmail を接続」してください。
+                  <span className="mt-1 block text-muted-foreground">詳細：{gmail.error}</span>
+                </p>
+              )}
               <Row label="アカウント">{gmail.email}</Row>
               <Row label="最終同期">{gmail.lastSyncAt ? formatDateTime(gmail.lastSyncAt) : "まだ同期していません"}</Row>
               <Row label="受信方法">

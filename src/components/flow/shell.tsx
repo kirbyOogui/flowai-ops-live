@@ -145,7 +145,11 @@ export function SideNav({
       <div className="mt-auto rounded-xl border bg-muted/40 p-3 text-xs text-muted-foreground">
         <p className="mb-2 font-semibold text-foreground">受付窓口</p>
         <ul className="space-y-1.5">
-          <ChannelStatus label="Gmail" ok={Boolean(integrations?.gmail.connected)} detail={integrations?.gmail.email} />
+          <ChannelStatus
+            label="Gmail"
+            ok={Boolean(integrations?.gmail.connected && !integrations.gmail.error)}
+            detail={integrations?.gmail.error ? "接続エラー" : integrations?.gmail.email}
+          />
           <ChannelStatus label="Slack" ok={Boolean(integrations?.slack.connected)} detail={integrations?.slack.team} />
           <ChannelStatus label="フォーム" ok detail="公開中" />
         </ul>

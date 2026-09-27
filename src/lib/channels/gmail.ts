@@ -299,10 +299,19 @@ export async function gmailStatus(): Promise<{
   lastSyncAt?: string | null;
   watchExpiration?: string | null;
   realtime: boolean;
+  /** 保存済みのトークンが使えない場合の理由（Google 側で接続が取り消された・無効化された など） */
+  error?: string;
 }> {
   const realtime = Boolean(process.env.GMAIL_PUBSUB_TOPIC?.trim());
   if (!gmailConfigured()) return { configured: false, connected: false, realtime };
   const stored = await loadStored().catch(() => null);
   if (!stored) return { configured: true, connected: false, realtime };
-  return { configured: true, connected: true, email: stored.email, lastSyncAt: stored.lastSyncAt, watchExpiration: stored.watchExpiration, realtime };
+  const base = { configured: true, connected: true, email: stored.email, lastSyncAt: stored.lastSyncAt, watchExpiration: stored.watchExpiration, realtime };
+  // 保存されているだけでなく、実際にトークンを更新できるかを確かめる（取り消しや無効化に気づけるように）
+  try {
+    await accessToken();
+    return base;
+  } catch (error) {
+    return { ...base, error: error instanceof Error ? error.message : String(error) };
+  }
 }
