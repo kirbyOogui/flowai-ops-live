@@ -148,7 +148,10 @@ export default function LandingPage() {
         </section>
 
         <p className="mt-6 text-xs text-muted-foreground">
-          ※ 画面内の「NEXORA株式会社」は架空の企業です。実際の依頼内容はオーナーだけが閲覧できます。
+          ※ 画面内の「NEXORA株式会社」は架空の企業です。実際の依頼内容はオーナーだけが閲覧できます。{" "}
+          <Link href="/privacy" className="underline hover:text-foreground">
+            プライバシーポリシー
+          </Link>
         </p>
       </main>
     </div>

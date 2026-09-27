@@ -28,7 +28,10 @@ export default function FormPage() {
         <RequestForm />
         <p className="mt-6 text-xs leading-relaxed text-muted-foreground">
           ※ FlowAI OPS の動作を確認するための窓口です（NEXORA株式会社は架空の企業です）。入力内容は依頼の分析のために OpenAI API に送信されます。
-          個人情報や機密情報は入力しないでください。
+          個人情報や機密情報は入力しないでください。{" "}
+          <Link href="/privacy" className="underline hover:text-foreground">
+            プライバシーポリシー
+          </Link>
         </p>
       </div>
     </main>
