@@ -1,0 +1,2 @@
+# 改行コードを LF に統一する（Windows / Mac どちらで編集しても差分が出ないように）
+* text=auto eol=lf

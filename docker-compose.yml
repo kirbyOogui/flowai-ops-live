@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: flowai-ops-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: flowai
+      POSTGRES_PASSWORD: flowai
+      POSTGRES_DB: flowai_ops
+    ports:
+      - "5433:5432"
+    volumes:
+      - flowai-ops-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U flowai -d flowai_ops"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  flowai-ops-db:

@@ -1,0 +1,181 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// 依頼の受付元。email = Gmail、slack = Slack Events API、form = 公開の依頼フォーム
+enum SourceType {
+  email
+  slack
+  form
+}
+
+enum Category {
+  sales
+  customer_success
+  product
+  design
+  engineering
+  marketing
+  finance
+  hr
+  general_affairs
+  legal
+}
+
+enum Priority {
+  urgent
+  high
+  medium
+  low
+}
+
+enum RequestStatus {
+  todo
+  in_progress
+  done
+}
+
+/// AIの判定がそのまま使えるか、人間の確認が必要か
+enum ReviewState {
+  auto_assigned
+  needs_review
+  confirmed
+}
+
+enum Actor {
+  ai
+  human
+  system
+}
+
+enum InboundStatus {
+  received
+  processing
+  processed
+  failed
+}
+
+/// NEXORA株式会社のメンバー（担当者候補）
+model Member {
+  id               String    @id
+  name             String
+  department       String
+  role             String
+  responsibilities String[]
+  sortOrder        Int       @default(0)
+  requests         Request[]
+}
+
+/// 外部から届いたメッセージそのもの。Webhook は受け取ったらすぐここへ保存して応答し、AI 分析は後から行う。
+/// (source, externalId) の一意制約で、再送や重複通知による二重登録を防ぐ。
+model InboundMessage {
+  id         String        @id @default(cuid())
+  source     SourceType
+  /// Gmail のメッセージ ID / Slack の channel:ts / フォーム送信 ID
+  externalId String
+  /// 正規化済みのメッセージ（src/lib/ingestion の NormalizedMessage をシリアライズしたもの）
+  payload    Json
+  status     InboundStatus @default(received)
+  /// 失敗時のエラー種別（AiErrorCode など）
+  error      String?
+  attempts   Int           @default(0)
+  receivedAt DateTime
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  request    Request?
+
+  @@unique([source, externalId])
+  @@index([status, createdAt])
+}
+
+model Request {
+  id               String         @id @default(cuid())
+  inboundId        String?        @unique
+  inbound          InboundMessage? @relation(fields: [inboundId], references: [id], onDelete: SetNull)
+  title            String
+  sourceType       SourceType
+  /// 受付元ごとの付帯情報（差出人・スレッド ID・チャンネルなど）。形は src/lib/ingestion の SourceMetadata 型を参照。
+  sourceMetadata   Json
+  requesterName    String
+  originalMessage  String
+
+  summary          String
+  category         Category
+  priority         Priority
+  assigneeId       String?
+  assignee         Member?        @relation(fields: [assigneeId], references: [id], onDelete: SetNull)
+  reviewState      ReviewState
+  dueDate          DateTime?      @db.Date
+  nextAction       String
+  replySubject     String
+  replyDraft       String
+  replySentAt      DateTime?
+  /// 実際に送信した返信の外部 ID（Gmail のメッセージ ID / Slack の ts）
+  replyExternalId  String?
+
+  /// AI が「過去のどの依頼の続きか」を特定した場合の関連先
+  relatedRequestId String?
+  relatedRequest   Request?       @relation("RelatedRequest", fields: [relatedRequestId], references: [id], onDelete: SetNull)
+  followUps        Request[]      @relation("RelatedRequest")
+
+  status           RequestStatus  @default(todo)
+  receivedAt       DateTime       @default(now())
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  analyses         AiAnalysis[]
+  activities       ActivityLog[]
+
+  @@index([status])
+  @@index([receivedAt])
+  @@index([updatedAt])
+  @@index([requesterName])
+}
+
+model AiAnalysis {
+  id                 String   @id @default(cuid())
+  requestId          String
+  request            Request  @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  provider           String
+  model              String
+  result             Json
+  assigneeConfidence String
+  latencyMs          Int?
+  createdAt          DateTime @default(now())
+
+  @@index([requestId])
+}
+
+model ActivityLog {
+  id          String   @id @default(cuid())
+  requestId   String
+  request     Request  @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  type        String
+  actor       Actor
+  description String
+  createdAt   DateTime @default(now())
+
+  @@index([requestId, createdAt])
+}
+
+/// 外部サービスとの接続情報（Gmail の OAuth トークンなど）。秘密情報は暗号化して data に保存する。
+model Integration {
+  id        String   @id
+  /// 暗号化した JSON（src/lib/crypto.ts）
+  data      String
+  updatedAt DateTime @updatedAt
+}
+
+/// 回数制限のための記録（フォーム送信・AI 分析・ログイン試行）。key 例: "form:<IPのハッシュ>", "ai", "login:<IPのハッシュ>"
+model UsageLog {
+  id        String   @id @default(cuid())
+  key       String
+  createdAt DateTime @default(now())
+
+  @@index([key, createdAt])
+}
