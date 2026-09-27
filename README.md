@@ -4,7 +4,8 @@
 
 - 架空の企業「NEXORA株式会社」の社内ツールという設定です。
 - **この版は外部サービスと実際に連携しています。** Gmail で受信したメールや Slack の投稿を取り込み、返信も Gmail・Slack から実際に送ります。
-- 誰でも操作できるサンドボックス版（受信と送信はシミュレーション）は、別リポジトリの「FlowAI OPS デモ版」です。
+- 公開URL: https://flowai-ops-live.vercel.app （依頼フォーム: https://flowai-ops-live.vercel.app/form ）
+- 誰でも操作できるサンドボックス版（受信と送信はシミュレーション）: https://flowai-ops-demo.vercel.app （リポジトリ: https://github.com/kirbyOogui/flowai-ops ）
 
 ## 画面と公開範囲
 
