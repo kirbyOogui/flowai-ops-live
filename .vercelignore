@@ -1,0 +1,7 @@
+# CLI からデプロイするときに、手元の秘密情報や生成物をアップロードしない
+.env
+.env.*
+!.env.example
+node_modules
+.next
+src/generated
